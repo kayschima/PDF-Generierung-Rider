@@ -5,15 +5,22 @@ namespace PDF_Generierung;
 
 public class XmlProcessor
 {
-    public List<string> GetVorgangValues(string xmlPath)
+    private const string DefaultNamespace = "https://portalverbund.d-nrw.de/efa/XSozial-basis/Version_2_4_0";
+
+    public List<string> GetVorgangValues(string xmlPath, string targetNamespace = DefaultNamespace)
     {
+        if (string.IsNullOrWhiteSpace(xmlPath))
+        {
+            throw new ArgumentException("Der Pfad zur XML-Datei darf nicht leer sein.", nameof(xmlPath));
+        }
+
         if (!File.Exists(xmlPath))
         {
             throw new FileNotFoundException($"XML-Datei nicht gefunden: {xmlPath}");
         }
 
         XDocument doc = XDocument.Load(xmlPath);
-        XNamespace xsb = "https://portalverbund.d-nrw.de/efa/XSozial-basis/Version_2_4_0";
+        XNamespace xsb = targetNamespace;
         
         var vorgang = doc.Descendants(xsb + "vorgang").FirstOrDefault();
 

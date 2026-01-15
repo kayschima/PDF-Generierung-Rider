@@ -25,27 +25,30 @@ public class PdfGenerator
 
     public void GeneratePdf(List<string> values, string filename)
     {
-        PdfDocument document = new PdfDocument();
+        using PdfDocument document = new PdfDocument();
         document.Info.Title = "Werte aus xsb:vorgang";
 
         PdfPage page = document.AddPage();
         XGraphics gfx = XGraphics.FromPdfPage(page);
         
-        // Use standard fonts if possible, or fallback to something that might work.
-        // In PDFsharp 6.x, we might need to handle font resolving.
-        // For simplicity, we try to use the built-in fonts if available.
+        // Arial ist ein Standard-Font in PDFsharp, sollte meist funktionieren.
         XFont titleFont = new XFont("Arial", 14, XFontStyleEx.Bold);
         XFont textFont = new XFont("Arial", 10, XFontStyleEx.Regular);
 
         double yPoint = 40;
-        double margin = 40;
-        double lineSpacing = 15;
+        const double margin = 40;
+        const double lineSpacing = 15;
 
         gfx.DrawString("Werte aus <xsb:vorgang>:", titleFont, XBrushes.Black, new XPoint(margin, yPoint));
         yPoint += 30;
 
         foreach (var value in values)
         {
+            // Text umbrechen, falls er zu breit für die Seite ist (einfache Implementierung)
+            string displayValue = value;
+            double maxWidth = page.Width.Point - (2 * margin);
+            
+            // Einfache Prüfung auf Seitenende
             if (yPoint > page.Height.Point - margin)
             {
                 page = document.AddPage();
@@ -53,7 +56,7 @@ public class PdfGenerator
                 yPoint = margin;
             }
 
-            gfx.DrawString(value, textFont, XBrushes.Black, new XPoint(margin, yPoint));
+            gfx.DrawString(displayValue, textFont, XBrushes.Black, new XPoint(margin, yPoint));
             yPoint += lineSpacing;
         }
 
