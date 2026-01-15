@@ -1,45 +1,41 @@
 ﻿namespace PDF_Generierung;
 
-class Program
+internal class Program
 {
-    static void Main(string[] args)
+    private static void Main(string[] args)
     {
-        // Pfad zur XML-Datei bestimmen (Standard oder via Argument)
-        string defaultXmlName = "urn-de-xta-messageid-dataport_xta_210-fc5cde98-f19f-48e9-8b6a-c74d752646bd.xml";
-        string xmlPath = args.Length > 0 ? args[0] : Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", defaultXmlName);
-        
-        if (!File.Exists(xmlPath))
+        if (args.Length < 2)
         {
-            xmlPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, defaultXmlName);
+            Console.WriteLine("Verwendung: PDF-Generierung.exe <xml_pfad> <pdf_dateiname>");
+            Console.WriteLine("Beispiel: PDF-Generierung.exe daten.xml ergebnis.pdf");
+            return;
         }
+
+        var xmlPath = args[0];
+        var outputPdf = args[1];
 
         if (!File.Exists(xmlPath))
         {
-            Console.WriteLine($"Warnung: XML-Datei '{xmlPath}' wurde nicht gefunden.");
-            Console.WriteLine("Bitte geben Sie den Pfad als Argument an: PDF-Generierung.exe <pfad_zu_xml>");
+            Console.WriteLine($"Fehler: Die XML-Datei '{xmlPath}' wurde nicht gefunden.");
             return;
         }
 
         try
         {
             Console.WriteLine($"Verarbeite Datei: {Path.GetFileName(xmlPath)}...");
-            
-            XmlProcessor xmlProcessor = new XmlProcessor();
-            List<string> values = xmlProcessor.GetVorgangValues(xmlPath);
 
-            PdfGenerator pdfGenerator = new PdfGenerator();
-            string outputPdf = "Vorgang_Werte.pdf";
+            var xmlProcessor = new XmlProcessor();
+            var values = xmlProcessor.GetVorgangValues(xmlPath);
+
+            var pdfGenerator = new PdfGenerator();
             pdfGenerator.GeneratePdf(values, outputPdf);
-            
+
             Console.WriteLine("Verarbeitung erfolgreich abgeschlossen.");
         }
         catch (Exception ex)
         {
             Console.WriteLine($"Ein unerwarteter Fehler ist aufgetreten: {ex.Message}");
-            if (ex.InnerException != null)
-            {
-                Console.WriteLine($"Details: {ex.InnerException.Message}");
-            }
+            if (ex.InnerException != null) Console.WriteLine($"Details: {ex.InnerException.Message}");
         }
     }
 }
