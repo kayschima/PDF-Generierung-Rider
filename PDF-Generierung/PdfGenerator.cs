@@ -15,6 +15,9 @@ public class PdfGenerator
 
     public void GeneratePdf(List<string> values, string filename, string targetNode)
     {
+        // Liste bereinigen basierend auf den Filter-Einstellungen
+        FilterSettings.CleanseList(values);
+
         using var document = new PdfDocument();
         document.Info.Title = $"Werte aus {targetNode}";
 
@@ -38,6 +41,20 @@ public class PdfGenerator
 
         document.Save(filename);
         Console.WriteLine($"PDF erfolgreich erstellt: {filename}");
+    }
+
+    /// <summary>
+    ///     Entfernt alle Einträge aus der Liste, die mit dem angegebenen Key beginnen.
+    /// </summary>
+    public void RemoveKey(List<string> values, string keyToRemove)
+    {
+        if (values == null || string.IsNullOrWhiteSpace(keyToRemove)) return;
+
+        // Wir suchen nach dem Key gefolgt von einem Doppelpunkt
+        var searchPattern = keyToRemove.Trim() + ":";
+
+        // RemoveAll entfernt effizient alle passenden Einträge aus der Liste
+        values.RemoveAll(v => v.StartsWith(searchPattern, StringComparison.OrdinalIgnoreCase));
     }
 
     public void DrawTable(string title, List<KeyValuePair<string, string>> items)

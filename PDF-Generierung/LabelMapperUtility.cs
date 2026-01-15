@@ -23,7 +23,14 @@ public static class LabelMapper
             "Familenname"
         },
         { "dritte-drittePerson-nichtNatuerlichePerson-ansprechpartner-nameNatuerlichePerson-vorname-name", "Vorname" },
-        { "dritte-drittePerson-nichtNatuerlichePerson-ansprechpartner-geburt-datum ", "Geburtsdatum" }
+        { "dritte-drittePerson-nichtNatuerlichePerson-ansprechpartner-geburt-datum", "Geburtsdatum" },
+        { "dritte-drittePerson-nichtNatuerlichePerson-kommunikation[1]-kennung", "Kontakt (Prio 1):" },
+        { "dritte-drittePerson-nichtNatuerlichePerson-kommunikation[2]-kennung", "Kontakt (Prio 2):" },
+        { "dritte-schriftgutempfaenger", "Schriftgutempfänger" },
+        {
+            "dritte-drittePerson-nichtNatuerlichePerson-ansprechpartner-staatsangehoerigkeit-staatsangehoerigkeit-code",
+            "Staatsangehörigkeit"
+        }
 
         // Hier kannst du bequem alle weiteren Bezeichnungen pflegen
     };
