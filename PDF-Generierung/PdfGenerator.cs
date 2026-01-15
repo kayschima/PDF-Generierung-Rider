@@ -9,31 +9,6 @@ public class PdfGenerator
     private const double Margin = 40;
     private const double RowHeight = 20;
 
-    private readonly Dictionary<string, string> _labelMapping = new()
-    {
-        { "dritte-dritteID", "Rolle" },
-        {
-            "dritte-drittePerson-nichtNatuerlichePerson-anschrift-anschriftInland-gebaeude-postleitzahl", "Postleitzahl"
-        },
-        { "dritte-drittePerson-nichtNatuerlichePerson-anschrift-anschriftInland-gebaeude-strasse", "Straße" },
-        { "dritte-drittePerson-nichtNatuerlichePerson-anschrift-anschriftInland-gebaeude-wohnort", "Wohnort" },
-        {
-            "dritte-drittePerson-nichtNatuerlichePerson-anschrift-anschriftInland-gebaeude-teilnummerDerHausnummer",
-            "Hausnummer"
-        },
-        {
-            "dritte-drittePerson-nichtNatuerlichePerson-anschrift-anschriftInland-gebaeude-zusatzangaben",
-            "Zusatzangaben"
-        },
-        {
-            "dritte-drittePerson-nichtNatuerlichePerson-ansprechpartner-nameNatuerlichePerson-familienname-name",
-            "Familenname"
-        },
-        { "dritte-drittePerson-nichtNatuerlichePerson-ansprechpartner-nameNatuerlichePerson-vorname-name", "Vorname" },
-        { "dritte-drittePerson-nichtNatuerlichePerson-ansprechpartner-geburt-datum ", "Geburtsdatum" }
-        // Hier kannst du weitere Mappings hinzufügen
-    };
-
     private XGraphics _gfx;
     private PdfPage _page;
     private double _yPoint;
@@ -50,11 +25,11 @@ public class PdfGenerator
         var tableData = values.Select(v =>
         {
             var parts = v.Split(':', 2);
-            var key = parts[0].Trim();
+            var technicalKey = parts[0].Trim();
             var value = parts.Length > 1 ? parts[1].Trim() : "";
 
-            // Nutze das Mapping, falls vorhanden, sonst den Original-Key
-            var displayKey = _labelMapping.GetValueOrDefault(key, key);
+            // Nutze die neue LabelMapper-Klasse
+            var displayKey = LabelMapper.GetFriendlyName(technicalKey);
 
             return new KeyValuePair<string, string>(displayKey, value);
         }).ToList();
