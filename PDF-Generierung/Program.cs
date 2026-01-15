@@ -31,7 +31,7 @@ internal class Program
             var values = xmlProcessor.GetValuesFromNode(xmlPath, targetNode);
 
             var pdfGenerator = new PdfGenerator();
-            pdfGenerator.GeneratePdf(values, outputPdf);
+            pdfGenerator.GeneratePdf(values, outputPdf, targetNode);
 
             Console.WriteLine("Verarbeitung erfolgreich abgeschlossen.");
         }

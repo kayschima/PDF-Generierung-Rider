@@ -12,10 +12,10 @@ public class PdfGenerator
     private PdfPage _page;
     private double _yPoint;
 
-    public void GeneratePdf(List<string> values, string filename)
+    public void GeneratePdf(List<string> values, string filename, string targetNode)
     {
         using var document = new PdfDocument();
-        document.Info.Title = "Werte aus xsb:vorgang";
+        document.Info.Title = $"Werte aus {targetNode}";
 
         _page = document.AddPage();
         _gfx = XGraphics.FromPdfPage(_page);
@@ -28,7 +28,7 @@ public class PdfGenerator
             return new KeyValuePair<string, string>(parts[0], parts.Length > 1 ? parts[1].Trim() : "");
         }).ToList();
 
-        DrawTable("Extrahiert aus <xsb:vorgang>", tableData);
+        DrawTable($"Extrahiert aus <{targetNode}>", tableData);
 
         document.Save(filename);
         Console.WriteLine($"PDF erfolgreich erstellt: {filename}");
