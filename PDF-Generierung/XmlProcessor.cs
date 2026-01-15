@@ -37,7 +37,7 @@ public class XmlProcessor
             foreach (var child in group)
             {
                 var suffix = isMultiple ? $"[{index}]" : "";
-                var childPath = $"{currentPath}/{child.Name.LocalName}{suffix}";
+                var childPath = $"{currentPath}-{child.Name.LocalName}{suffix}";
 
                 if (!child.HasElements && !string.IsNullOrWhiteSpace(child.Value))
                     values.Add($"{childPath}: {child.Value.Trim()}");

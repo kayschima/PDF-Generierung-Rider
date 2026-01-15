@@ -8,6 +8,32 @@ public class PdfGenerator
 {
     private const double Margin = 40;
     private const double RowHeight = 20;
+
+    private readonly Dictionary<string, string> _labelMapping = new()
+    {
+        { "dritte-dritteID", "Rolle" },
+        {
+            "dritte-drittePerson-nichtNatuerlichePerson-anschrift-anschriftInland-gebaeude-postleitzahl", "Postleitzahl"
+        },
+        { "dritte-drittePerson-nichtNatuerlichePerson-anschrift-anschriftInland-gebaeude-strasse", "Straße" },
+        { "dritte-drittePerson-nichtNatuerlichePerson-anschrift-anschriftInland-gebaeude-wohnort", "Wohnort" },
+        {
+            "dritte-drittePerson-nichtNatuerlichePerson-anschrift-anschriftInland-gebaeude-teilnummerDerHausnummer",
+            "Hausnummer"
+        },
+        {
+            "dritte-drittePerson-nichtNatuerlichePerson-anschrift-anschriftInland-gebaeude-zusatzangaben",
+            "Zusatzangaben"
+        },
+        {
+            "dritte-drittePerson-nichtNatuerlichePerson-ansprechpartner-nameNatuerlichePerson-familienname-name",
+            "Familenname"
+        },
+        { "dritte-drittePerson-nichtNatuerlichePerson-ansprechpartner-nameNatuerlichePerson-vorname-name", "Vorname" },
+        { "dritte-drittePerson-nichtNatuerlichePerson-ansprechpartner-geburt-datum ", "Geburtsdatum" }
+        // Hier kannst du weitere Mappings hinzufügen
+    };
+
     private XGraphics _gfx;
     private PdfPage _page;
     private double _yPoint;
@@ -21,11 +47,16 @@ public class PdfGenerator
         _gfx = XGraphics.FromPdfPage(_page);
         _yPoint = Margin;
 
-        // Beispielaufruf der neuen Tabellenfunktion
         var tableData = values.Select(v =>
         {
             var parts = v.Split(':', 2);
-            return new KeyValuePair<string, string>(parts[0], parts.Length > 1 ? parts[1].Trim() : "");
+            var key = parts[0].Trim();
+            var value = parts.Length > 1 ? parts[1].Trim() : "";
+
+            // Nutze das Mapping, falls vorhanden, sonst den Original-Key
+            var displayKey = _labelMapping.GetValueOrDefault(key, key);
+
+            return new KeyValuePair<string, string>(displayKey, value);
         }).ToList();
 
         DrawTable($"Extrahiert aus <{targetNode}>", tableData);
@@ -37,7 +68,7 @@ public class PdfGenerator
     public void DrawTable(string title, List<KeyValuePair<string, string>> items)
     {
         var headerFont = new XFont("Arial", 12, XFontStyleEx.Bold);
-        var cellFont = new XFont("Arial", 10, XFontStyleEx.Regular);
+        var cellFont = new XFont("Arial", 9, XFontStyleEx.Regular);
         var tableWidth = _page.Width.Point - 2 * Margin;
         var colWidth = tableWidth / 2;
 
