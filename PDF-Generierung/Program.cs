@@ -4,18 +4,19 @@ internal class Program
 {
     private static void Main(string[] args)
     {
-        if (args.Length < 3)
+        if (args.Length < 4)
         {
             Console.WriteLine(
-                "Verwendung: PDF-Generierung.exe <xml_pfad> <pdf_dateiname> <xml_knotenname1> [<xml_knotenname2> ...]");
-            Console.WriteLine("Beispiel: PDF-Generierung.exe daten.xml ergebnis.pdf vorgang");
-            Console.WriteLine("Beispiel: PDF-Generierung.exe daten.xml ergebnis.pdf person dritte");
+                "Verwendung: PDF-Generierung.exe <pdf_titel> <xml_pfad> <pdf_dateiname> <xml_knotenname1> [<xml_knotenname2> ...]");
+            Console.WriteLine("Beispiel: PDF-Generierung.exe \"Mein Bericht\" daten.xml ergebnis.pdf vorgang");
+            Console.WriteLine("Beispiel: PDF-Generierung.exe \"Antragsdaten\" daten.xml ergebnis.pdf person dritte");
             return;
         }
 
-        var xmlPath = args[0];
-        var outputPdf = args[1];
-        var targetNodes = args.Skip(2).ToList();
+        var pdfTitle = args[0];
+        var xmlPath = args[1];
+        var outputPdf = args[2];
+        var targetNodes = args.Skip(3).ToList();
 
         if (!File.Exists(xmlPath))
         {
@@ -32,7 +33,7 @@ internal class Program
             var allNodesValues = xmlProcessor.GetValuesFromNodes(xmlPath, targetNodes);
 
             var pdfGenerator = new PdfGenerator();
-            pdfGenerator.GeneratePdf(allNodesValues, outputPdf);
+            pdfGenerator.GeneratePdf(allNodesValues, outputPdf, pdfTitle);
 
             Console.WriteLine("Verarbeitung erfolgreich abgeschlossen.");
         }

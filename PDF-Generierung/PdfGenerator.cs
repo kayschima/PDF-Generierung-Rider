@@ -13,14 +13,21 @@ public class PdfGenerator
     private PdfPage _page;
     private double _yPoint;
 
-    public void GeneratePdf(List<(string NodeName, List<string> Values)> allNodesValues, string filename)
+    public void GeneratePdf(List<(string NodeName, List<string> Values)> allNodesValues, string filename,
+        string pdfTitle)
     {
         using var document = new PdfDocument();
-        document.Info.Title = "Extrahiert aus XML";
+        document.Info.Title = pdfTitle;
 
         _page = document.AddPage();
         _gfx = XGraphics.FromPdfPage(_page);
-        _yPoint = Margin;
+
+        // Hauptüberschrift zeichnen
+        var titleFont = new XFont("Arial", 20, XFontStyleEx.Bold);
+        _gfx.DrawString(pdfTitle, titleFont, XBrushes.Black,
+            new XRect(Margin, Margin, _page.Width.Point - 2 * Margin, 40), XStringFormats.Center);
+
+        _yPoint = Margin + 60; // Startpunkt für die Tabellen nach der Überschrift
 
         // Gruppieren nach NodeName, um Instanzen pro Node zählen zu können
         var countsByNode = allNodesValues.GroupBy(n => n.NodeName)
