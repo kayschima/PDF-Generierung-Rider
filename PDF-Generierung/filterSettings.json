@@ -9,5 +9,10 @@
   "kommunikation[4]-kanal-code",
   "person-ausbildung-ausbildungID",
   "ausbildungsart-code",
-  "leistungArt-code"
+  "leistungArt-code",
+  "nachrichtentyp-code",
+  "leser-kennung",
+  "autor-kennung",
+  "dvdvDienstkennung",
+  "verzeichnisdienst-code"
 ]

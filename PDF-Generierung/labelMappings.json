@@ -1,4 +1,6 @@
 {
+  "nachrichtenUUID": "Nachrichten-ID",
+  "nachricht-erstellungszeitpunkt": "Erstellungszeitpunkt",
   "personID": "Rolle",
   "dritteID": "Rolle",
   "postleitzahl": "Postleitzahl",
@@ -16,5 +18,8 @@
   "staatsangehoerigkeit-staatsangehoerigkeit-code": "Staatsangehörigkeit",
   "geschlecht-code": "Geschlecht",
   "beantragteLeistungID": "Beantragte Leistung",
-  "ausbildung-einrichtung": "Schule"
+  "ausbildung-einrichtung": "Schule",
+  "autor-verzeichnisdienst-code": "Verzeichnisdienst",
+  "leser-name": "übernommen von",
+  "autor-name": "ausgegeben von"
 }

@@ -43,22 +43,19 @@ public class PdfGenerator
 
                 // Wert-Transformationen
                 if (value.Equals("true", StringComparison.OrdinalIgnoreCase))
-                {
                     value = "ja";
-                }
                 else if (value.Equals("false", StringComparison.OrdinalIgnoreCase))
-                {
                     value = "nein";
-                }
-                else if (DateTime.TryParse(value, out var date))
-                {
-                    // Einfache Prüfung, ob es wie ein technisches Datum aussieht (enthält Bindestriche)
-                    // Um zu vermeiden, dass einfache Zahlen als Datum interpretiert werden.
+                else if (DateTime.TryParse(value, out var dateTime))
+                    // Prüfung, ob es wie ein technisches Datum/Zeit aussieht (enthält Bindestriche)
                     if (value.Contains("-"))
                     {
-                        value = date.ToString("dd.MM.yyyy");
+                        // Wenn 'T' enthalten ist, handelt es sich wahrscheinlich um einen Zeitstempel (ISO 8601)
+                        if (value.Contains("T"))
+                            value = dateTime.ToString("dd.MM.yyyy HH:mm:ss");
+                        else
+                            value = dateTime.ToString("dd.MM.yyyy");
                     }
-                }
 
                 // Nutze die LabelMapper-Klasse
                 var displayKey = LabelMapper.GetFriendlyName(technicalKey);
