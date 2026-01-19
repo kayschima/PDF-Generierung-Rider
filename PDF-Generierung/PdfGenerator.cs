@@ -13,11 +13,8 @@ public class PdfGenerator
     private PdfPage _page;
     private double _yPoint;
 
-    public void GeneratePdf(List<string> values, string filename, string targetNode)
+    public void GeneratePdf(List<List<string>> allNodesValues, string filename, string targetNode)
     {
-        // Liste bereinigen basierend auf den Filter-Einstellungen
-        FilterSettings.CleanseList(values);
-
         using var document = new PdfDocument();
         document.Info.Title = $"Werte aus {targetNode}";
 
@@ -25,19 +22,31 @@ public class PdfGenerator
         _gfx = XGraphics.FromPdfPage(_page);
         _yPoint = Margin;
 
-        var tableData = values.Select(v =>
+        var tableIndex = 1;
+        foreach (var values in allNodesValues)
         {
-            var parts = v.Split(':', 2);
-            var technicalKey = parts[0].Trim();
-            var value = parts.Length > 1 ? parts[1].Trim() : "";
+            // Liste bereinigen basierend auf den Filter-Einstellungen
+            FilterSettings.CleanseList(values);
 
-            // Nutze die neue LabelMapper-Klasse
-            var displayKey = LabelMapper.GetFriendlyName(technicalKey);
+            var tableData = values.Select(v =>
+            {
+                var parts = v.Split(':', 2);
+                var technicalKey = parts[0].Trim();
+                var value = parts.Length > 1 ? parts[1].Trim() : "";
 
-            return new KeyValuePair<string, string>(displayKey, value);
-        }).ToList();
+                // Nutze die neue LabelMapper-Klasse
+                var displayKey = LabelMapper.GetFriendlyName(technicalKey);
 
-        DrawTable($"Extrahiert aus <{targetNode}>", tableData);
+                return new KeyValuePair<string, string>(displayKey, value);
+            }).ToList();
+
+            var title = allNodesValues.Count > 1
+                ? $"<{targetNode}> (Instanz {tableIndex})"
+                : $"Extrahiert aus <{targetNode}>";
+
+            DrawTable(title, tableData);
+            tableIndex++;
+        }
 
         document.Save(filename);
         Console.WriteLine($"PDF erfolgreich erstellt: {filename}");

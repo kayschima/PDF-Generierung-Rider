@@ -6,7 +6,8 @@ public class XmlProcessor
 {
     private const string DefaultNamespace = "https://portalverbund.d-nrw.de/efa/XSozial-basis/Version_2_4_0";
 
-    public List<string> GetValuesFromNode(string xmlPath, string nodeName, string targetNamespace = DefaultNamespace)
+    public List<List<string>> GetValuesFromNode(string xmlPath, string nodeName,
+        string targetNamespace = DefaultNamespace)
     {
         if (string.IsNullOrWhiteSpace(xmlPath))
             throw new ArgumentException("Der Pfad zur XML-Datei darf nicht leer sein.", nameof(xmlPath));
@@ -14,15 +15,22 @@ public class XmlProcessor
         var doc = XDocument.Load(xmlPath);
         XNamespace ns = targetNamespace;
 
-        // Suche nach dem Knoten im angegebenen Namespace oder ohne Namespace
-        var targetNode = doc.Descendants().FirstOrDefault(e => e.Name.LocalName == nodeName);
+        // Suche nach allen Knoten im angegebenen Namespace oder ohne Namespace
+        var targetNodes = doc.Descendants().Where(e => e.Name.LocalName == nodeName).ToList();
 
-        if (targetNode == null)
+        if (targetNodes.Count == 0)
             throw new InvalidOperationException($"Knoten <{nodeName}> wurde in der Datei nicht gefunden.");
 
-        var values = new List<string>();
-        ExtractValues(targetNode, values, targetNode.Name.LocalName);
-        return values;
+        var allNodesValues = new List<List<string>>();
+
+        foreach (var targetNode in targetNodes)
+        {
+            var values = new List<string>();
+            ExtractValues(targetNode, values, targetNode.Name.LocalName);
+            allNodesValues.Add(values);
+        }
+
+        return allNodesValues;
     }
 
     private void ExtractValues(XElement element, List<string> values, string currentPath)

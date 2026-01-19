@@ -28,10 +28,10 @@ internal class Program
             Console.WriteLine($"Suche nach Knoten: <{targetNode}>");
 
             var xmlProcessor = new XmlProcessor();
-            var values = xmlProcessor.GetValuesFromNode(xmlPath, targetNode);
+            var allNodesValues = xmlProcessor.GetValuesFromNode(xmlPath, targetNode);
 
             var pdfGenerator = new PdfGenerator();
-            pdfGenerator.GeneratePdf(values, outputPdf, targetNode);
+            pdfGenerator.GeneratePdf(allNodesValues, outputPdf, targetNode);
 
             Console.WriteLine("Verarbeitung erfolgreich abgeschlossen.");
         }
