@@ -1,0 +1,9 @@
+[
+  "dritte-dritteTyp-code",
+  "dritte-postfach-postfachID",
+  "dritte-postfach-postfachTyp-code",
+  "dritte-postfach-provider",
+  "dritte-drittePerson-nichtNatuerlichePerson-kommunikation[1]-kanal-code",
+  "dritte-drittePerson-nichtNatuerlichePerson-kommunikation[2]-kanal-code",
+  "dritte-drittePerson-nichtNatuerlichePerson-kommunikation[3]-kanal-code"
+]

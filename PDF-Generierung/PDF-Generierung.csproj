@@ -16,6 +16,12 @@
         <None Update="urn-de-xta-messageid-dataport_xta_210-fc5cde98-f19f-48e9-8b6a-c74d752646bd.xml">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
+        <None Update="filterSettings.json">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
+        <None Update="labelMappings.json">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
     </ItemGroup>
 
 </Project>

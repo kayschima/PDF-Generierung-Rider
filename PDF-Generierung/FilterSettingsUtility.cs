@@ -1,19 +1,25 @@
+using System.Text.Json;
+
 namespace PDF_Generierung;
 
 public static class FilterSettings
 {
-    // Hier alle Keys eintragen, die NICHT im PDF erscheinen sollen
-    private static readonly HashSet<string> KeysToRemove = new(StringComparer.OrdinalIgnoreCase)
+    private static readonly HashSet<string> KeysToRemove;
+
+    static FilterSettings()
     {
-        "dritte-dritteTyp-code",
-        "dritte-postfach-postfachID",
-        "dritte-postfach-postfachTyp-code",
-        "dritte-postfach-provider",
-        "dritte-drittePerson-nichtNatuerlichePerson-kommunikation[1]-kanal-code",
-        "dritte-drittePerson-nichtNatuerlichePerson-kommunikation[2]-kanal-code",
-        "dritte-drittePerson-nichtNatuerlichePerson-kommunikation[3]-kanal-code"
-        // Einfach weitere Keys hier hinzufügen
-    };
+        try
+        {
+            var json = File.ReadAllText("filterSettings.json");
+            var keys = JsonSerializer.Deserialize<List<string>>(json);
+            KeysToRemove = new HashSet<string>(keys ?? [], StringComparer.OrdinalIgnoreCase);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Fehler beim Laden der filterSettings.json: {ex.Message}");
+            KeysToRemove = [];
+        }
+    }
 
     public static void CleanseList(List<string> values)
     {
