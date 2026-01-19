@@ -16,13 +16,10 @@ public class XmlProcessor
             throw new ArgumentException("Es muss mindestens ein Knotenname angegeben werden.", nameof(nodeNames));
 
         var doc = XDocument.Load(xmlPath);
-        XNamespace ns = targetNamespace;
-
         var allNodesValues = new List<(string NodeName, List<string> Values)>();
 
         foreach (var nodeName in nodeNames)
         {
-            // Suche nach allen Knoten im angegebenen Namespace oder ohne Namespace
             var targetNodes = doc.Descendants().Where(e => e.Name.LocalName == nodeName).ToList();
 
             foreach (var targetNode in targetNodes)
@@ -34,8 +31,11 @@ public class XmlProcessor
         }
 
         if (allNodesValues.Count == 0)
+        {
+            var nodesString = string.Join(", ", nodeNames.Select(n => $"<{n}>"));
             throw new InvalidOperationException(
-                $"Keiner der angegebenen Knoten ({string.Join(", ", nodeNames)}) wurde in der Datei gefunden.");
+                $"Keiner der angegebenen Knoten ({nodesString}) wurde in der Datei gefunden.");
+        }
 
         return allNodesValues;
     }

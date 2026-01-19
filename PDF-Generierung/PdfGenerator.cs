@@ -9,8 +9,8 @@ public class PdfGenerator
     private const double Margin = 40;
     private const double RowHeight = 20;
 
-    private XGraphics _gfx;
-    private PdfPage _page;
+    private XGraphics? _gfx;
+    private PdfPage? _page;
     private double _yPoint;
 
     public void GeneratePdf(List<(string NodeName, List<string> Values)> allNodesValues, string filename,
@@ -22,14 +22,10 @@ public class PdfGenerator
         _page = document.AddPage();
         _gfx = XGraphics.FromPdfPage(_page);
 
-        // Hauptüberschrift zeichnen
-        var titleFont = new XFont("Arial", 20, XFontStyleEx.Bold);
-        _gfx.DrawString(pdfTitle, titleFont, XBrushes.Black,
-            new XRect(Margin, Margin, _page.Width.Point - 2 * Margin, 40), XStringFormats.Center);
+        DrawMainTitle(pdfTitle);
 
-        _yPoint = Margin + 60; // Startpunkt für die Tabellen nach der Überschrift
+        _yPoint = Margin + 60;
 
-        // Gruppieren nach NodeName, um Instanzen pro Node zählen zu können
         var countsByNode = allNodesValues.GroupBy(n => n.NodeName)
             .ToDictionary(g => g.Key, g => 0);
 
@@ -39,36 +35,9 @@ public class PdfGenerator
             var currentInstance = countsByNode[nodeName];
             var totalInstancesForThisNode = allNodesValues.Count(n => n.NodeName == nodeName);
 
-            // Liste bereinigen basierend auf den Filter-Einstellungen
             FilterSettings.CleanseList(values);
 
-            var tableData = values.Select(v =>
-            {
-                var parts = v.Split(':', 2);
-                var technicalKey = parts[0].Trim();
-                var value = parts.Length > 1 ? parts[1].Trim() : "";
-
-                // Wert-Transformationen
-                if (value.Equals("true", StringComparison.OrdinalIgnoreCase))
-                    value = "ja";
-                else if (value.Equals("false", StringComparison.OrdinalIgnoreCase))
-                    value = "nein";
-                else if (DateTime.TryParse(value, out var dateTime))
-                    // Prüfung, ob es wie ein technisches Datum/Zeit aussieht (enthält Bindestriche)
-                    if (value.Contains("-"))
-                    {
-                        // Wenn 'T' enthalten ist, handelt es sich wahrscheinlich um einen Zeitstempel (ISO 8601)
-                        if (value.Contains("T"))
-                            value = dateTime.ToString("dd.MM.yyyy HH:mm:ss");
-                        else
-                            value = dateTime.ToString("dd.MM.yyyy");
-                    }
-
-                // Nutze die LabelMapper-Klasse
-                var displayKey = LabelMapper.GetFriendlyName(technicalKey);
-
-                return new KeyValuePair<string, string>(displayKey, value);
-            }).ToList();
+            var tableData = values.Select(ProcessValueLine).ToList();
 
             var title = totalInstancesForThisNode > 1
                 ? $"<{nodeName}> (Instanz {currentInstance})"
@@ -77,12 +46,54 @@ public class PdfGenerator
             DrawTable(title, tableData);
         }
 
-        // Sicherstellen, dass das letzte XGraphics-Objekt freigegeben wird
-        _gfx.Dispose();
+        _gfx?.Dispose();
+        AddPageNumbers(document);
 
-        // Seitenzahlen am Ende hinzufügen
+        document.Save(filename);
+        Console.WriteLine($"PDF erfolgreich erstellt: {filename}");
+    }
+
+    private void DrawMainTitle(string title)
+    {
+        if (_gfx == null || _page == null) return;
+        var titleFont = new XFont("Arial", 20, XFontStyleEx.Bold);
+        _gfx.DrawString(title, titleFont, XBrushes.Black,
+            new XRect(Margin, Margin, _page.Width.Point - 2 * Margin, 40), XStringFormats.Center);
+    }
+
+    private KeyValuePair<string, string> ProcessValueLine(string line)
+    {
+        var parts = line.Split(':', 2);
+        var technicalKey = parts[0].Trim();
+        var rawValue = parts.Length > 1 ? parts[1].Trim() : "";
+
+        var transformedValue = TransformValue(rawValue);
+        var displayKey = LabelMapper.GetFriendlyName(technicalKey);
+
+        return new KeyValuePair<string, string>(displayKey, transformedValue);
+    }
+
+    private string TransformValue(string value)
+    {
+        if (value.Equals("true", StringComparison.OrdinalIgnoreCase))
+            return "ja";
+        if (value.Equals("false", StringComparison.OrdinalIgnoreCase))
+            return "nein";
+
+        if (DateTime.TryParse(value, out var dateTime) && value.Contains("-"))
+        {
+            if (value.Contains("T"))
+                return dateTime.ToString("dd.MM.yyyy HH:mm:ss");
+            return dateTime.ToString("dd.MM.yyyy");
+        }
+
+        return value;
+    }
+
+    private void AddPageNumbers(PdfDocument document)
+    {
         var footerFont = new XFont("Arial", 10, XFontStyleEx.Regular);
-        for (int i = 0; i < document.PageCount; i++)
+        for (var i = 0; i < document.PageCount; i++)
         {
             var page = document.Pages[i];
             using var footerGfx = XGraphics.FromPdfPage(page);
@@ -90,9 +101,6 @@ public class PdfGenerator
             footerGfx.DrawString(pageNumberText, footerFont, XBrushes.Black,
                 new XRect(0, page.Height.Point - Margin + 10, page.Width.Point, 20), XStringFormats.Center);
         }
-
-        document.Save(filename);
-        Console.WriteLine($"PDF erfolgreich erstellt: {filename}");
     }
 
     /// <summary>
@@ -111,6 +119,8 @@ public class PdfGenerator
 
     public void DrawTable(string title, List<KeyValuePair<string, string>> items)
     {
+        if (_gfx == null || _page == null) return;
+
         var headerFont = new XFont("Arial", 12, XFontStyleEx.Bold);
         var cellFont = new XFont("Arial", 9, XFontStyleEx.Regular);
         var tableWidth = _page.Width.Point - 2 * Margin;
@@ -149,9 +159,11 @@ public class PdfGenerator
 
     private void CheckPageFlow(double neededHeight)
     {
+        if (_page == null) return;
+
         if (_yPoint + neededHeight > _page.Height.Point - Margin)
         {
-            _gfx.Dispose(); // Vorheriges XGraphics-Objekt freigeben
+            _gfx?.Dispose(); // Vorheriges XGraphics-Objekt freigeben
             _page = _page.Owner.AddPage();
             _gfx = XGraphics.FromPdfPage(_page);
             _yPoint = Margin;
@@ -163,14 +175,11 @@ public class PdfGenerator
     {
         public FontResolverInfo ResolveTypeface(string familyName, bool isBold, bool isItalic)
         {
-            // This is a minimal implementation. In a real scenario, you'd return the correct font.
-            // For now, we hope the system has some default or we use the snippet if available.
             return new FontResolverInfo("Arial");
         }
 
-        public byte[] GetFont(string faceName)
+        public byte[]? GetFont(string faceName)
         {
-            // This is just a stub. Normally you'd return the font data.
             return null;
         }
     }
