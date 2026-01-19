@@ -77,6 +77,20 @@ public class PdfGenerator
             DrawTable(title, tableData);
         }
 
+        // Sicherstellen, dass das letzte XGraphics-Objekt freigegeben wird
+        _gfx.Dispose();
+
+        // Seitenzahlen am Ende hinzufügen
+        var footerFont = new XFont("Arial", 10, XFontStyleEx.Regular);
+        for (int i = 0; i < document.PageCount; i++)
+        {
+            var page = document.Pages[i];
+            using var footerGfx = XGraphics.FromPdfPage(page);
+            var pageNumberText = $"Seite {i + 1} von {document.PageCount}";
+            footerGfx.DrawString(pageNumberText, footerFont, XBrushes.Black,
+                new XRect(0, page.Height.Point - Margin + 10, page.Width.Point, 20), XStringFormats.Center);
+        }
+
         document.Save(filename);
         Console.WriteLine($"PDF erfolgreich erstellt: {filename}");
     }
@@ -137,6 +151,7 @@ public class PdfGenerator
     {
         if (_yPoint + neededHeight > _page.Height.Point - Margin)
         {
+            _gfx.Dispose(); // Vorheriges XGraphics-Objekt freigeben
             _page = _page.Owner.AddPage();
             _gfx = XGraphics.FromPdfPage(_page);
             _yPoint = Margin;
