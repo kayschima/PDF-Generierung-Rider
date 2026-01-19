@@ -13,18 +13,25 @@ public class PdfGenerator
     private PdfPage _page;
     private double _yPoint;
 
-    public void GeneratePdf(List<List<string>> allNodesValues, string filename, string targetNode)
+    public void GeneratePdf(List<(string NodeName, List<string> Values)> allNodesValues, string filename)
     {
         using var document = new PdfDocument();
-        document.Info.Title = $"Werte aus {targetNode}";
+        document.Info.Title = "Extrahiert aus XML";
 
         _page = document.AddPage();
         _gfx = XGraphics.FromPdfPage(_page);
         _yPoint = Margin;
 
-        var tableIndex = 1;
-        foreach (var values in allNodesValues)
+        // Gruppieren nach NodeName, um Instanzen pro Node zählen zu können
+        var countsByNode = allNodesValues.GroupBy(n => n.NodeName)
+            .ToDictionary(g => g.Key, g => 0);
+
+        foreach (var (nodeName, values) in allNodesValues)
         {
+            countsByNode[nodeName]++;
+            var currentInstance = countsByNode[nodeName];
+            var totalInstancesForThisNode = allNodesValues.Count(n => n.NodeName == nodeName);
+
             // Liste bereinigen basierend auf den Filter-Einstellungen
             FilterSettings.CleanseList(values);
 
@@ -34,18 +41,17 @@ public class PdfGenerator
                 var technicalKey = parts[0].Trim();
                 var value = parts.Length > 1 ? parts[1].Trim() : "";
 
-                // Nutze die neue LabelMapper-Klasse
+                // Nutze die LabelMapper-Klasse
                 var displayKey = LabelMapper.GetFriendlyName(technicalKey);
 
                 return new KeyValuePair<string, string>(displayKey, value);
             }).ToList();
 
-            var title = allNodesValues.Count > 1
-                ? $"<{targetNode}> (Instanz {tableIndex})"
-                : $"Extrahiert aus <{targetNode}>";
+            var title = totalInstancesForThisNode > 1
+                ? $"<{nodeName}> (Instanz {currentInstance})"
+                : $"<{nodeName}>";
 
             DrawTable(title, tableData);
-            tableIndex++;
         }
 
         document.Save(filename);

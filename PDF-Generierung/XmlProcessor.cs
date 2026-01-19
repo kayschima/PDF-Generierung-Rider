@@ -6,29 +6,36 @@ public class XmlProcessor
 {
     private const string DefaultNamespace = "https://portalverbund.d-nrw.de/efa/XSozial-basis/Version_2_4_0";
 
-    public List<List<string>> GetValuesFromNode(string xmlPath, string nodeName,
+    public List<(string NodeName, List<string> Values)> GetValuesFromNodes(string xmlPath, List<string> nodeNames,
         string targetNamespace = DefaultNamespace)
     {
         if (string.IsNullOrWhiteSpace(xmlPath))
             throw new ArgumentException("Der Pfad zur XML-Datei darf nicht leer sein.", nameof(xmlPath));
 
+        if (nodeNames == null || nodeNames.Count == 0)
+            throw new ArgumentException("Es muss mindestens ein Knotenname angegeben werden.", nameof(nodeNames));
+
         var doc = XDocument.Load(xmlPath);
         XNamespace ns = targetNamespace;
 
-        // Suche nach allen Knoten im angegebenen Namespace oder ohne Namespace
-        var targetNodes = doc.Descendants().Where(e => e.Name.LocalName == nodeName).ToList();
+        var allNodesValues = new List<(string NodeName, List<string> Values)>();
 
-        if (targetNodes.Count == 0)
-            throw new InvalidOperationException($"Knoten <{nodeName}> wurde in der Datei nicht gefunden.");
-
-        var allNodesValues = new List<List<string>>();
-
-        foreach (var targetNode in targetNodes)
+        foreach (var nodeName in nodeNames)
         {
-            var values = new List<string>();
-            ExtractValues(targetNode, values, targetNode.Name.LocalName);
-            allNodesValues.Add(values);
+            // Suche nach allen Knoten im angegebenen Namespace oder ohne Namespace
+            var targetNodes = doc.Descendants().Where(e => e.Name.LocalName == nodeName).ToList();
+
+            foreach (var targetNode in targetNodes)
+            {
+                var values = new List<string>();
+                ExtractValues(targetNode, values, targetNode.Name.LocalName);
+                allNodesValues.Add((nodeName, values));
+            }
         }
+
+        if (allNodesValues.Count == 0)
+            throw new InvalidOperationException(
+                $"Keiner der angegebenen Knoten ({string.Join(", ", nodeNames)}) wurde in der Datei gefunden.");
 
         return allNodesValues;
     }
