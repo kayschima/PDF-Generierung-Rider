@@ -41,6 +41,25 @@ public class PdfGenerator
                 var technicalKey = parts[0].Trim();
                 var value = parts.Length > 1 ? parts[1].Trim() : "";
 
+                // Wert-Transformationen
+                if (value.Equals("true", StringComparison.OrdinalIgnoreCase))
+                {
+                    value = "ja";
+                }
+                else if (value.Equals("false", StringComparison.OrdinalIgnoreCase))
+                {
+                    value = "nein";
+                }
+                else if (DateTime.TryParse(value, out var date))
+                {
+                    // Einfache Prüfung, ob es wie ein technisches Datum aussieht (enthält Bindestriche)
+                    // Um zu vermeiden, dass einfache Zahlen als Datum interpretiert werden.
+                    if (value.Contains("-"))
+                    {
+                        value = date.ToString("dd.MM.yyyy");
+                    }
+                }
+
                 // Nutze die LabelMapper-Klasse
                 var displayKey = LabelMapper.GetFriendlyName(technicalKey);
 
