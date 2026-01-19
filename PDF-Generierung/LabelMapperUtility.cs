@@ -10,7 +10,12 @@ public static class LabelMapper
     {
         try
         {
-            var json = File.ReadAllText("labelMappings.json");
+            var fileName = "labelMappings.json";
+            // Suche die Datei im aktuellen Verzeichnis oder im Verzeichnis der Assembly
+            var path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, fileName);
+            if (!File.Exists(path)) path = fileName;
+
+            var json = File.ReadAllText(path);
             ValueMappings = JsonSerializer.Deserialize<Dictionary<string, string>>(json)
                             ?? new Dictionary<string, string>();
         }
@@ -25,7 +30,17 @@ public static class LabelMapper
     {
         if (string.IsNullOrWhiteSpace(technicalKey)) return technicalKey;
 
-        // Versuche den Key zu finden, ansonsten gib den Original-Key zurück
-        return ValueMappings.GetValueOrDefault(technicalKey.Trim(), technicalKey);
+        var trimmedKey = technicalKey.Trim();
+
+        // 1. Versuche zuerst eine exakte Übereinstimmung (höchste Priorität und beste Performance)
+        if (ValueMappings.TryGetValue(trimmedKey, out var friendlyName)) return friendlyName;
+
+        // 2. Suche nach Fragmenten: Wenn ein Mapping-Key im technischen Key enthalten ist,
+        // wird der technische Key komplett durch den Friendly Name ersetzt.
+        foreach (var mapping in ValueMappings)
+            if (trimmedKey.Contains(mapping.Key, StringComparison.OrdinalIgnoreCase))
+                return mapping.Value;
+
+        return trimmedKey;
     }
 }

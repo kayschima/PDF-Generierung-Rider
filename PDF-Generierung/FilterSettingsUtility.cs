@@ -10,7 +10,11 @@ public static class FilterSettings
     {
         try
         {
-            var json = File.ReadAllText("filterSettings.json");
+            var fileName = "filterSettings.json";
+            var path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, fileName);
+            if (!File.Exists(path)) path = fileName;
+
+            var json = File.ReadAllText(path);
             var keys = JsonSerializer.Deserialize<List<string>>(json);
             KeysToRemove = new HashSet<string>(keys ?? [], StringComparer.OrdinalIgnoreCase);
         }
@@ -31,7 +35,10 @@ public static class FilterSettings
             if (parts.Length == 0) return false;
 
             var key = parts[0].Trim();
-            return KeysToRemove.Contains(key);
+
+            // Prüfe, ob eines der Fragmente aus KeysToRemove im aktuellen Key enthalten ist
+            return KeysToRemove.Any(filterFragment =>
+                key.Contains(filterFragment, StringComparison.OrdinalIgnoreCase));
         });
     }
 }
