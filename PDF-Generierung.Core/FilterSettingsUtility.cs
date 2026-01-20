@@ -1,6 +1,6 @@
 using System.Text.Json;
 
-namespace PDF_Generierung;
+namespace PDF_Generierung.Core;
 
 public static class FilterSettings
 {

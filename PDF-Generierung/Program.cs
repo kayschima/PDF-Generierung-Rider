@@ -1,4 +1,6 @@
-﻿namespace PDF_Generierung;
+﻿using PDF_Generierung.Core;
+
+namespace PDF_Generierung;
 
 internal class Program
 {

@@ -2,7 +2,7 @@ using PdfSharp.Drawing;
 using PdfSharp.Fonts;
 using PdfSharp.Pdf;
 
-namespace PDF_Generierung;
+namespace PDF_Generierung.Core;
 
 public class PdfGenerator
 {

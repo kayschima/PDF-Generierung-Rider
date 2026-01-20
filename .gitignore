@@ -1,3 +1,6 @@
+/.idea/
+/PDF-Generierung.Core/bin/
+/PDF-Generierung.Core/obj/
 /PDF-Generierung/bin/
 /PDF-Generierung/obj/
-/.idea/
+/*.pdf

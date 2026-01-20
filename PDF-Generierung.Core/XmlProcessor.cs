@@ -1,6 +1,6 @@
 using System.Xml.Linq;
 
-namespace PDF_Generierung;
+namespace PDF_Generierung.Core;
 
 public class XmlProcessor
 {
