@@ -123,8 +123,10 @@ public class PdfGenerator
 
         var headerFont = new XFont("Arial", 12, XFontStyleEx.Bold);
         var cellFont = new XFont("Arial", 9, XFontStyleEx.Regular);
+        var boldCellFont = new XFont("Arial", 9, XFontStyleEx.Bold);
         var tableWidth = _page.Width.Point - 2 * Margin;
-        var colWidth = tableWidth / 2;
+        var col1Width = tableWidth / 3;
+        var col2Width = tableWidth * 2 / 3;
 
         // Prüfung auf Seitenende für den Header
         CheckPageFlow(RowHeight);
@@ -142,14 +144,14 @@ public class PdfGenerator
             CheckPageFlow(RowHeight);
 
             // Rahmen für Zellen
-            _gfx.DrawRectangle(XPens.Black, Margin, _yPoint, colWidth, RowHeight);
-            _gfx.DrawRectangle(XPens.Black, Margin + colWidth, _yPoint, colWidth, RowHeight);
+            _gfx.DrawRectangle(XPens.Black, Margin, _yPoint, col1Width, RowHeight);
+            _gfx.DrawRectangle(XPens.Black, Margin + col1Width, _yPoint, col2Width, RowHeight);
 
             // Texte in die Spalten schreiben
-            _gfx.DrawString(item.Key, cellFont, XBrushes.Black,
-                new XRect(Margin + 5, _yPoint, colWidth - 10, RowHeight), XStringFormats.CenterLeft);
+            _gfx.DrawString(item.Key, boldCellFont, XBrushes.Black,
+                new XRect(Margin + 5, _yPoint, col1Width - 10, RowHeight), XStringFormats.CenterLeft);
             _gfx.DrawString(item.Value, cellFont, XBrushes.Black,
-                new XRect(Margin + colWidth + 5, _yPoint, colWidth - 10, RowHeight), XStringFormats.CenterLeft);
+                new XRect(Margin + col1Width + 5, _yPoint, col2Width - 10, RowHeight), XStringFormats.CenterLeft);
 
             _yPoint += RowHeight;
         }
