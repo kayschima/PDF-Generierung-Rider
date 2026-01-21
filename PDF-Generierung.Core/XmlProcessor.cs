@@ -40,6 +40,28 @@ public class XmlProcessor
         return allNodesValues;
     }
 
+    public List<(string NodeName, List<string> Values)> FilterPersonNodesBySchule(
+        List<(string NodeName, List<string> Values)> nodes, string schule)
+    {
+        return nodes.Where(node =>
+        {
+            if (node.NodeName != "person") return true;
+
+            // Suche nach dem 'einrichtung'-Wert innerhalb der person-Werte
+            // Das Format ist "person-...-einrichtung: wert"
+            var einrichtungValue = node.Values
+                .FirstOrDefault(v => v.Contains("-einrichtung:"))
+                ?.Split(':').LastOrDefault()?.Trim();
+
+            if (einrichtungValue != null && einrichtungValue.Length >= 4)
+            {
+                return einrichtungValue.Substring(0, 4) == schule;
+            }
+
+            return false;
+        }).ToList();
+    }
+
     private void ExtractValues(XElement element, List<string> values, string currentPath)
     {
         var childGroups = element.Elements().GroupBy(e => e.Name);
