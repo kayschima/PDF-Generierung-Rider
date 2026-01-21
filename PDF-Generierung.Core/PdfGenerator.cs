@@ -13,7 +13,7 @@ public class PdfGenerator
     private PdfPage? _page;
     private double _yPoint;
 
-    public void GeneratePdf(List<(string NodeName, List<string> Values)> allNodesValues, string filename,
+    public bool GeneratePdf(List<(string NodeName, List<string> Values)> allNodesValues, string filename,
         string pdfTitle)
     {
         using var document = new PdfDocument();
@@ -50,7 +50,7 @@ public class PdfGenerator
         AddPageNumbers(document);
 
         document.Save(filename);
-        Console.WriteLine($"PDF erfolgreich erstellt: {filename}");
+        return true;
     }
 
     private void DrawMainTitle(string title)
