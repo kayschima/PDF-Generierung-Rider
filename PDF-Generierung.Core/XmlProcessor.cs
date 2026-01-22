@@ -8,7 +8,8 @@ public class XmlProcessor
 {
     private const string DefaultNamespace = "https://portalverbund.d-nrw.de/efa/XSozial-basis/Version_2_4_0";
 
-    public List<(string NodeName, List<string> Values)> GetValuesFromNodes(string xmlPath, List<string> nodeNames,
+    public List<(string NodeName, string TableTitle, List<string> Values)> GetValuesFromNodes(string xmlPath,
+        List<string> nodeNames,
         string targetNamespace = DefaultNamespace)
     {
         if (string.IsNullOrWhiteSpace(xmlPath))
@@ -18,7 +19,7 @@ public class XmlProcessor
             throw new ArgumentException("Es muss mindestens ein Knotenname angegeben werden.", nameof(nodeNames));
 
         var doc = XDocument.Load(xmlPath);
-        var allNodesValues = new List<(string NodeName, List<string> Values)>();
+        var allNodesValues = new List<(string NodeName, string TableTitle, List<string> Values)>();
 
         foreach (var nodeName in nodeNames)
         {
@@ -30,8 +31,8 @@ public class XmlProcessor
                 ExtractValues(targetNode, values, targetNode.Name.LocalName);
 
                 // Sortierung anwenden, falls eine Konfigurationsdatei existiert
-                var sortedValues = SortValues(nodeName, values);
-                allNodesValues.Add((nodeName, sortedValues));
+                var (sortedValues, tableTitle) = SortValues(nodeName, values);
+                allNodesValues.Add((nodeName, tableTitle, sortedValues));
             }
         }
 
@@ -45,29 +46,36 @@ public class XmlProcessor
         return allNodesValues;
     }
 
-    private List<string> SortValues(string nodeName, List<string> values)
+    private (List<string> Values, string TableTitle) SortValues(string nodeName, List<string> values)
     {
         var sortConfigPath = Path.Combine("config", $"sortOrder_{nodeName}.json");
+        var defaultTitle = $"<{nodeName}>";
+
         if (!File.Exists(sortConfigPath))
         {
-            return values;
+            return (values, defaultTitle);
         }
 
         try
         {
             var jsonContent = File.ReadAllText(sortConfigPath);
-            var sortOrder = JsonSerializer.Deserialize<Dictionary<string, string>>(jsonContent);
-
-            if (sortOrder == null || sortOrder.Count == 0)
+            var config = JsonSerializer.Deserialize<SortConfig>(jsonContent, new JsonSerializerOptions
             {
-                return values;
+                PropertyNameCaseInsensitive = true
+            });
+
+            if (config == null || config.Mappings == null || config.Mappings.Count == 0)
+            {
+                return (values, config?.TableTitle ?? defaultTitle);
             }
 
+            var sortOrder = config.Mappings;
+            var tableTitle = config.TableTitle ?? defaultTitle;
             var sortKeys = sortOrder.Keys.ToList();
 
             // Wir filtern die Werte so, dass nur die in der sortOrder Liste enthaltenen Pfade zurückgegeben werden.
             // Dabei ersetzen wir den technischen Pfad durch das Label aus der Konfiguration.
-            return values.Select(v =>
+            var sortedList = values.Select(v =>
                 {
                     var parts = v.Split(':', 2);
                     var path = parts[0].Trim();
@@ -92,16 +100,18 @@ public class XmlProcessor
                     return sortKeys.IndexOf(key);
                 })
                 .ToList()!;
+
+            return (sortedList, tableTitle);
         }
         catch
         {
             // Bei Fehlern (z.B. ungültiges JSON) geben wir die unsortierten Werte zurück
-            return values;
+            return (values, defaultTitle);
         }
     }
 
-    public List<(string NodeName, List<string> Values)> FilterPersonNodesBySchule(
-        List<(string NodeName, List<string> Values)> nodes, string schule)
+    public List<(string NodeName, string TableTitle, List<string> Values)> FilterPersonNodesBySchule(
+        List<(string NodeName, string TableTitle, List<string> Values)> nodes, string schule)
     {
         return nodes.Where(node =>
         {
@@ -143,5 +153,11 @@ public class XmlProcessor
                 index++;
             }
         }
+    }
+
+    private class SortConfig
+    {
+        public string TableTitle { get; set; }
+        public Dictionary<string, string> Mappings { get; set; }
     }
 }

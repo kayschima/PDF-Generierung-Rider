@@ -13,7 +13,8 @@ public class PdfGenerator
     private PdfPage? _page;
     private double _yPoint;
 
-    public bool GeneratePdf(List<(string NodeName, List<string> Values)> allNodesValues, string filename,
+    public bool GeneratePdf(List<(string NodeName, string TableTitle, List<string> Values)> allNodesValues,
+        string filename,
         string pdfTitle)
     {
         using var document = new PdfDocument();
@@ -29,7 +30,7 @@ public class PdfGenerator
         var countsByNode = allNodesValues.GroupBy(n => n.NodeName)
             .ToDictionary(g => g.Key, g => 0);
 
-        foreach (var (nodeName, values) in allNodesValues)
+        foreach (var (nodeName, tableTitle, values) in allNodesValues)
         {
             countsByNode[nodeName]++;
             var currentInstance = countsByNode[nodeName];
@@ -38,8 +39,8 @@ public class PdfGenerator
             var tableData = values.Select(ProcessValueLine).ToList();
 
             var title = totalInstancesForThisNode > 1
-                ? $"<{nodeName}> (Instanz {currentInstance})"
-                : $"<{nodeName}>";
+                ? $"{tableTitle} (Instanz {currentInstance})"
+                : tableTitle;
 
             DrawTable(title, tableData);
         }
