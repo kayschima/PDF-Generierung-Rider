@@ -63,27 +63,24 @@ public class XmlProcessor
                 return values;
             }
 
-            // Wir sortieren nach der Index-Position in der sortOrder Liste.
-            // Werte, die nicht in der Liste stehen, kommen ans Ende (nach ihrer ursprünglichen Reihenfolge).
-            return values.OrderBy(v =>
+            // Wir filtern die Werte so, dass nur die in der sortOrder Liste enthaltenen Pfade zurückgegeben werden.
+            return values.Where(v =>
             {
-                // Extrahiere den Pfad-Teil (vor dem Doppelpunkt)
                 var path = v.Split(':').FirstOrDefault() ?? v;
-                // Entferne eventuelle Indizes wie [1] am Ende des Pfad-Segments für den Vergleich, 
-                // falls die Sortierdatei nur den Basispfad angibt.
-                // Oder wir vergleichen exakt, wenn die Sortierdatei die Indizes enthalten würde.
-                // Hier gehen wir davon aus, dass die Sortierdatei die exakten Pfade (ggf. ohne Indizes) enthält.
-
+                var pathWithoutIndex = Regex.Replace(path, @"\[\d+\]", "");
+                return sortOrder.Contains(path) || sortOrder.Contains(pathWithoutIndex);
+            }).OrderBy(v =>
+            {
+                var path = v.Split(':').FirstOrDefault() ?? v;
                 var index = sortOrder.IndexOf(path);
                 if (index == -1)
                 {
-                    // Versuche es ohne Index [n]
                     var pathWithoutIndex = Regex.Replace(path, @"\[\d+\]", "");
                     index = sortOrder.IndexOf(pathWithoutIndex);
                 }
 
-                return index == -1 ? int.MaxValue : index;
-            }).ThenBy(v => values.IndexOf(v)).ToList();
+                return index;
+            }).ToList();
         }
         catch
         {
