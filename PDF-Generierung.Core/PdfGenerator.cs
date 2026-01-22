@@ -35,8 +35,6 @@ public class PdfGenerator
             var currentInstance = countsByNode[nodeName];
             var totalInstancesForThisNode = allNodesValues.Count(n => n.NodeName == nodeName);
 
-            FilterSettings.CleanseList(values);
-
             var tableData = values.Select(ProcessValueLine).ToList();
 
             var title = totalInstancesForThisNode > 1
@@ -64,11 +62,10 @@ public class PdfGenerator
     private KeyValuePair<string, string> ProcessValueLine(string line)
     {
         var parts = line.Split(':', 2);
-        var technicalKey = parts[0].Trim();
+        var displayKey = parts[0].Trim();
         var rawValue = parts.Length > 1 ? parts[1].Trim() : "";
 
         var transformedValue = TransformValue(rawValue);
-        var displayKey = LabelMapper.GetFriendlyName(technicalKey);
 
         return new KeyValuePair<string, string>(displayKey, transformedValue);
     }

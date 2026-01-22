@@ -56,31 +56,42 @@ public class XmlProcessor
         try
         {
             var jsonContent = File.ReadAllText(sortConfigPath);
-            var sortOrder = JsonSerializer.Deserialize<List<string>>(jsonContent);
+            var sortOrder = JsonSerializer.Deserialize<Dictionary<string, string>>(jsonContent);
 
             if (sortOrder == null || sortOrder.Count == 0)
             {
                 return values;
             }
 
-            // Wir filtern die Werte so, dass nur die in der sortOrder Liste enthaltenen Pfade zurückgegeben werden.
-            return values.Where(v =>
-            {
-                var path = v.Split(':').FirstOrDefault() ?? v;
-                var pathWithoutIndex = Regex.Replace(path, @"\[\d+\]", "");
-                return sortOrder.Contains(path) || sortOrder.Contains(pathWithoutIndex);
-            }).OrderBy(v =>
-            {
-                var path = v.Split(':').FirstOrDefault() ?? v;
-                var index = sortOrder.IndexOf(path);
-                if (index == -1)
-                {
-                    var pathWithoutIndex = Regex.Replace(path, @"\[\d+\]", "");
-                    index = sortOrder.IndexOf(pathWithoutIndex);
-                }
+            var sortKeys = sortOrder.Keys.ToList();
 
-                return index;
-            }).ToList();
+            // Wir filtern die Werte so, dass nur die in der sortOrder Liste enthaltenen Pfade zurückgegeben werden.
+            // Dabei ersetzen wir den technischen Pfad durch das Label aus der Konfiguration.
+            return values.Select(v =>
+                {
+                    var parts = v.Split(':', 2);
+                    var path = parts[0].Trim();
+                    var value = parts.Length > 1 ? parts[1].Trim() : "";
+
+                    var pathWithoutIndex = Regex.Replace(path, @"\[\d+\]", "");
+
+                    if (sortOrder.TryGetValue(path, out var label) ||
+                        sortOrder.TryGetValue(pathWithoutIndex, out label))
+                    {
+                        return $"{label}: {value}";
+                    }
+
+                    return null;
+                })
+                .Where(v => v != null)
+                .OrderBy(v =>
+                {
+                    var label = v.Split(':', 2)[0].Trim();
+                    // Wir suchen den Index basierend auf dem Label in der sortOrder
+                    var key = sortOrder.FirstOrDefault(x => x.Value == label).Key;
+                    return sortKeys.IndexOf(key);
+                })
+                .ToList()!;
         }
         catch
         {
@@ -97,9 +108,9 @@ public class XmlProcessor
             if (node.NodeName != "person") return true;
 
             // Suche nach dem 'einrichtung'-Wert innerhalb der person-Werte
-            // Das Format ist "person-...-einrichtung: wert"
+            // Da die Werte bereits sortiert und gelabelt sind, suchen wir nach dem Label "Schule"
             var einrichtungValue = node.Values
-                .FirstOrDefault(v => v.Contains("-einrichtung:"))
+                .FirstOrDefault(v => v.StartsWith("Schule:"))
                 ?.Split(':').LastOrDefault()?.Trim();
 
             if (einrichtungValue != null && einrichtungValue.Length >= 4)
