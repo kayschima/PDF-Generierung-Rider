@@ -1,3 +1,5 @@
+using System.Text.Json;
+using System.Text.RegularExpressions;
 using System.Xml.Linq;
 
 namespace PDF_Generierung.Core;
@@ -26,7 +28,10 @@ public class XmlProcessor
             {
                 var values = new List<string>();
                 ExtractValues(targetNode, values, targetNode.Name.LocalName);
-                allNodesValues.Add((nodeName, values));
+
+                // Sortierung anwenden, falls eine Konfigurationsdatei existiert
+                var sortedValues = SortValues(nodeName, values);
+                allNodesValues.Add((nodeName, sortedValues));
             }
         }
 
@@ -38,6 +43,53 @@ public class XmlProcessor
         }
 
         return allNodesValues;
+    }
+
+    private List<string> SortValues(string nodeName, List<string> values)
+    {
+        var sortConfigPath = Path.Combine("config", $"sortOrder_{nodeName}.json");
+        if (!File.Exists(sortConfigPath))
+        {
+            return values;
+        }
+
+        try
+        {
+            var jsonContent = File.ReadAllText(sortConfigPath);
+            var sortOrder = JsonSerializer.Deserialize<List<string>>(jsonContent);
+
+            if (sortOrder == null || sortOrder.Count == 0)
+            {
+                return values;
+            }
+
+            // Wir sortieren nach der Index-Position in der sortOrder Liste.
+            // Werte, die nicht in der Liste stehen, kommen ans Ende (nach ihrer ursprünglichen Reihenfolge).
+            return values.OrderBy(v =>
+            {
+                // Extrahiere den Pfad-Teil (vor dem Doppelpunkt)
+                var path = v.Split(':').FirstOrDefault() ?? v;
+                // Entferne eventuelle Indizes wie [1] am Ende des Pfad-Segments für den Vergleich, 
+                // falls die Sortierdatei nur den Basispfad angibt.
+                // Oder wir vergleichen exakt, wenn die Sortierdatei die Indizes enthalten würde.
+                // Hier gehen wir davon aus, dass die Sortierdatei die exakten Pfade (ggf. ohne Indizes) enthält.
+
+                var index = sortOrder.IndexOf(path);
+                if (index == -1)
+                {
+                    // Versuche es ohne Index [n]
+                    var pathWithoutIndex = Regex.Replace(path, @"\[\d+\]", "");
+                    index = sortOrder.IndexOf(pathWithoutIndex);
+                }
+
+                return index == -1 ? int.MaxValue : index;
+            }).ThenBy(v => values.IndexOf(v)).ToList();
+        }
+        catch
+        {
+            // Bei Fehlern (z.B. ungültiges JSON) geben wir die unsortierten Werte zurück
+            return values;
+        }
     }
 
     public List<(string NodeName, List<string> Values)> FilterPersonNodesBySchule(

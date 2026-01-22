@@ -11,12 +11,26 @@ public static class FilterSettings
         try
         {
             var fileName = "filterSettings.json";
-            var path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, fileName);
-            if (!File.Exists(path)) path = fileName;
+            var path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "config", fileName);
+            if (!File.Exists(path)) path = Path.Combine("config", fileName);
 
-            var json = File.ReadAllText(path);
-            var keys = JsonSerializer.Deserialize<List<string>>(json);
-            KeysToRemove = new HashSet<string>(keys ?? [], StringComparer.OrdinalIgnoreCase);
+            if (!File.Exists(path))
+            {
+                // Fallback
+                path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, fileName);
+                if (!File.Exists(path)) path = fileName;
+            }
+
+            if (File.Exists(path))
+            {
+                var json = File.ReadAllText(path);
+                var keys = JsonSerializer.Deserialize<List<string>>(json);
+                KeysToRemove = new HashSet<string>(keys ?? [], StringComparer.OrdinalIgnoreCase);
+            }
+            else
+            {
+                KeysToRemove = [];
+            }
         }
         catch (Exception ex)
         {

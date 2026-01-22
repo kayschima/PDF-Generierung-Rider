@@ -11,13 +11,27 @@ public static class LabelMapper
         try
         {
             var fileName = "labelMappings.json";
-            // Suche die Datei im aktuellen Verzeichnis oder im Verzeichnis der Assembly
-            var path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, fileName);
-            if (!File.Exists(path)) path = fileName;
+            // Suche die Datei im aktuellen Verzeichnis/config oder im Verzeichnis der Assembly/config
+            var path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "config", fileName);
+            if (!File.Exists(path)) path = Path.Combine("config", fileName);
 
-            var json = File.ReadAllText(path);
-            ValueMappings = JsonSerializer.Deserialize<Dictionary<string, string>>(json)
-                            ?? new Dictionary<string, string>();
+            if (!File.Exists(path))
+            {
+                // Fallback zum alten Ort falls config nicht existiert
+                path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, fileName);
+                if (!File.Exists(path)) path = fileName;
+            }
+
+            if (File.Exists(path))
+            {
+                var json = File.ReadAllText(path);
+                ValueMappings = JsonSerializer.Deserialize<Dictionary<string, string>>(json)
+                                ?? new Dictionary<string, string>();
+            }
+            else
+            {
+                ValueMappings = new Dictionary<string, string>();
+            }
         }
         catch (Exception ex)
         {
