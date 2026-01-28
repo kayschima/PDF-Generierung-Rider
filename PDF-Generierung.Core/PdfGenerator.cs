@@ -1,4 +1,5 @@
 using PdfSharp.Drawing;
+using PdfSharp.Drawing.Layout;
 using PdfSharp.Fonts;
 using PdfSharp.Pdf;
 
@@ -126,40 +127,83 @@ public class PdfGenerator
         var col1Width = tableWidth / 3;
         var col2Width = tableWidth * 2 / 3;
 
-        // Prüfung auf Seitenende für den Header
+        // Professionelle Farben und Pens
+        var headerBrush = new XSolidBrush(XColor.FromArgb(45, 45, 45)); // Anthrazit
+        var zebraBrush = new XSolidBrush(XColor.FromArgb(245, 245, 245)); // Hellgrau
+        var borderPen = new XPen(XColors.LightGray, 0.5);
+        const double padding = 8;
+
+        // Hilfsfunktion zum Zeichnen des Headers
+        Action drawHeader = () =>
+        {
+            _gfx.DrawRectangle(headerBrush, Margin, _yPoint, tableWidth, RowHeight);
+            _gfx.DrawString(title + " (Fortsetzung)", headerFont, XBrushes.White,
+                new XRect(Margin + padding, _yPoint, tableWidth - 2 * padding, RowHeight), XStringFormats.CenterLeft);
+            _yPoint += RowHeight;
+        };
+
+        // Erster Header (ohne "(Fortsetzung)")
         CheckPageFlow(RowHeight);
-
-        // 1. Header zeichnen (Roter Hintergrund, weiße Schrift)
-        _gfx.DrawRectangle(XBrushes.Red, Margin, _yPoint, tableWidth, RowHeight);
+        _gfx.DrawRectangle(headerBrush, Margin, _yPoint, tableWidth, RowHeight);
         _gfx.DrawString(title, headerFont, XBrushes.White,
-            new XRect(Margin + 5, _yPoint, tableWidth, RowHeight), XStringFormats.CenterLeft);
-
+            new XRect(Margin + padding, _yPoint, tableWidth - 2 * padding, RowHeight), XStringFormats.CenterLeft);
         _yPoint += RowHeight;
 
         // 2. Datenzeilen zeichnen
-        foreach (var item in items)
+        for (var i = 0; i < items.Count; i++)
         {
-            CheckPageFlow(RowHeight);
+            var item = items[i];
+
+            // Text-Layout für Spalte 2 vorbereiten (Word Wrap)
+            var tf = new XTextFormatter(_gfx);
+
+            double currentLineHeight = RowHeight;
+            // Einfache Schätzung der Zeilenanzahl
+            var size = _gfx.MeasureString(item.Value, cellFont);
+            if (size.Width > col2Width - 2 * padding)
+            {
+                int lines = (int)Math.Ceiling(size.Width / (col2Width - 2 * padding));
+                currentLineHeight = Math.Max(RowHeight, lines * (cellFont.Height + 2) + padding);
+            }
+
+            if (CheckPageFlow(currentLineHeight))
+            {
+                // Wenn eine neue Seite erstellt wurde, Header wiederholen
+                drawHeader();
+                // TextFormatter muss für die neue Seite neu initialisiert werden
+                tf = new XTextFormatter(_gfx);
+            }
+
+            // Zebra-Streifen Hintergrund
+            if (i % 2 != 0)
+            {
+                _gfx.DrawRectangle(zebraBrush, Margin, _yPoint, tableWidth, currentLineHeight);
+            }
 
             // Rahmen für Zellen
-            _gfx.DrawRectangle(XPens.Black, Margin, _yPoint, col1Width, RowHeight);
-            _gfx.DrawRectangle(XPens.Black, Margin + col1Width, _yPoint, col2Width, RowHeight);
+            _gfx.DrawRectangle(borderPen, Margin, _yPoint, col1Width, currentLineHeight);
+            _gfx.DrawRectangle(borderPen, Margin + col1Width, _yPoint, col2Width, currentLineHeight);
 
             // Texte in die Spalten schreiben
             _gfx.DrawString(item.Key, boldCellFont, XBrushes.Black,
-                new XRect(Margin + 5, _yPoint, col1Width - 10, RowHeight), XStringFormats.CenterLeft);
-            _gfx.DrawString(item.Value, cellFont, XBrushes.Black,
-                new XRect(Margin + col1Width + 5, _yPoint, col2Width - 10, RowHeight), XStringFormats.CenterLeft);
+                new XRect(Margin + padding, _yPoint, col1Width - 2 * padding, currentLineHeight),
+                XStringFormats.CenterLeft);
 
-            _yPoint += RowHeight;
+            // Value mit Word-Wrap
+            var rect = new XRect(Margin + col1Width + padding, _yPoint + padding / 2, col2Width - 2 * padding,
+                currentLineHeight - padding);
+            tf.Alignment = XParagraphAlignment.Left;
+            tf.DrawString(item.Value, cellFont, XBrushes.Black, rect);
+
+            _yPoint += currentLineHeight;
         }
 
         _yPoint += 10; // Kleiner Abstand nach der Tabelle
     }
 
-    private void CheckPageFlow(double neededHeight)
+    private bool CheckPageFlow(double neededHeight)
     {
-        if (_page == null) return;
+        if (_page == null) return false;
 
         if (_yPoint + neededHeight > _page.Height.Point - Margin)
         {
@@ -167,7 +211,10 @@ public class PdfGenerator
             _page = _page.Owner.AddPage();
             _gfx = XGraphics.FromPdfPage(_page);
             _yPoint = Margin;
+            return true;
         }
+
+        return false;
     }
 
     // Simple FontResolver implementation if needed
